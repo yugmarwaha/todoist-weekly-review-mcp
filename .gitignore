@@ -4,3 +4,4 @@ dist/
 .env.*
 .claude/
 !.env.example
+CLAUDE.local.md
