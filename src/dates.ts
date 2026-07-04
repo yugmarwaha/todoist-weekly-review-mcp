@@ -38,6 +38,9 @@ export function localDateString(date: Date, timezone: string): string {
  */
 export function daysOverdue(dueDate: string, timezone: string, now: Date = new Date()): number {
   const dueCalendarDate = dueDate.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueCalendarDate)) {
+    throw new Error(`Unrecognized due date format from Todoist: "${dueDate}"`);
+  }
   const todayCalendarDate = localDateString(now, timezone);
 
   const due = Date.UTC(

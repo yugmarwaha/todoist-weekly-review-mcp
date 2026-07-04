@@ -4,7 +4,7 @@ An MCP server for doing a weekly review of your Todoist with Claude. It lists yo
 overdue tasks with the signals that matter (days overdue, priority, how often you've
 postponed each one). Claude suggests a fix per task, you approve or veto each one in
 chat, and only the approved changes are applied. The server decides nothing on its own
-and makes no LLM calls.
+and makes no LLM calls. Unofficial — not affiliated with Doist.
 
 v1 handles overdue tasks only. Roadmap and design history: `PLAN.md`, `CONTEXT.md`.
 
@@ -44,6 +44,8 @@ and say **"run my weekly review"**.
   filtering is `GET /tasks/filter?query=…`, and moving a task is `POST /tasks/{id}/move`.
 - Todoist quirk: a task due earlier *today* doesn't count as "overdue" until tomorrow.
 - Days overdue are computed in your Todoist account's timezone.
+- Recurring tasks are flagged `isRecurring` — completing one advances it to the next
+  occurrence instead of retiring it.
 
 ## Tests
 

@@ -35,3 +35,17 @@ test("localDateString formats using the en-CA YYYY-MM-DD trick", () => {
   const date = new Date("2026-01-05T00:00:00Z");
   assert.equal(localDateString(date, "UTC"), "2026-01-05");
 });
+
+test("daysOverdue throws on a malformed due date like 'garbage'", () => {
+  assert.throws(
+    () => daysOverdue("garbage", "UTC"),
+    (err: Error) => err.message.includes("Unrecognized due date format"),
+  );
+});
+
+test("daysOverdue throws on a malformed due date like '07/02/2026'", () => {
+  assert.throws(
+    () => daysOverdue("07/02/2026", "UTC"),
+    (err: Error) => err.message.includes("Unrecognized due date format"),
+  );
+});

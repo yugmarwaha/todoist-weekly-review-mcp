@@ -29,29 +29,45 @@ test("mapOverdueTask includes timesRescheduled when postponed_count is present",
   assert.equal(out.projectId, "p1");
   assert.equal(out.priority, 4);
   assert.equal(out.dueDate, "2026-07-01");
+  assert.equal(out.isRecurring, false);
 });
 
 test("mapOverdueTask omits timesRescheduled entirely when postponed_count is absent", () => {
   const task = makeTask(); // no postponed_count
   const out = mapOverdueTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
   assert.equal("timesRescheduled" in out, false);
+  assert.equal(out.isRecurring, false);
 });
 
 test("mapOverdueTask handles a datetime due.date by taking the calendar date", () => {
   const task = makeTask({ due: { date: "2026-07-01T14:00:00Z" } });
   const out = mapOverdueTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
   assert.equal(out.dueDate, "2026-07-01");
+  assert.equal(out.isRecurring, false);
 });
 
 test("mapOverdueTask falls back to a placeholder projectName when the id isn't in the map", () => {
   const task = makeTask({ project_id: "unknown" });
   const out = mapOverdueTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
   assert.equal(out.projectName, "(unknown project)");
+  assert.equal(out.isRecurring, false);
 });
 
 test("mapOverdueTask throws if the task has no due date", () => {
   const task = makeTask({ due: null });
   assert.throws(() => mapOverdueTask(task, new Map(), "UTC"));
+});
+
+test("mapOverdueTask sets isRecurring true when due.is_recurring is true", () => {
+  const task = makeTask({ due: { date: "2026-07-01", is_recurring: true } });
+  const out = mapOverdueTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
+  assert.equal(out.isRecurring, true);
+});
+
+test("mapOverdueTask sets isRecurring false when due.is_recurring is absent", () => {
+  const task = makeTask({ due: { date: "2026-07-01" } });
+  const out = mapOverdueTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
+  assert.equal(out.isRecurring, false);
 });
 
 // ---------------------------------------------------------------------------

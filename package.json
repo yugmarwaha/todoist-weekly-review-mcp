@@ -10,14 +10,24 @@
   "scripts": {
     "build": "tsc",
     "start": "node --env-file-if-exists=.env dist/index.js",
-    "test": "npm run build && node --test dist/*.test.js"
+    "test": "npm run build && node --test dist/*.test.js",
+    "prepublishOnly": "npm test"
   },
   "keywords": [
     "mcp",
     "todoist"
   ],
-  "author": "",
+  "author": "Yug Marwaha",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yugmarwaha/todoist-weekly-review-mcp.git"
+  },
+  "files": [
+    "dist",
+    "!dist/*.test.js",
+    "!dist/*.test.d.ts"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.23.8"
