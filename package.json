@@ -1,0 +1,29 @@
+{
+  "name": "todoist-weekly-review-mcp",
+  "version": "0.1.0",
+  "description": "Thin MCP server for a Todoist weekly review: reads overdue tasks and applies human-approved fixes.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "todoist-weekly-review-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "npm run build && node --test dist"
+  },
+  "keywords": [
+    "mcp",
+    "todoist"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}
