@@ -182,6 +182,7 @@ export function registerTools(server: McpServer): void {
     "get_overdue_tasks",
     {
       title: "Get overdue tasks",
+      annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
       description: [
         "Returns every currently-overdue Todoist task as weekly-review candidates:",
         "{ id, content, projectId, projectName, priority, dueDate, daysOverdue, timesRescheduled? }.",
@@ -230,6 +231,7 @@ export function registerTools(server: McpServer): void {
     "get_projects",
     {
       title: "Get projects",
+      annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
       description: [
         "Returns every Todoist project as { id, name } (paginated to completion).",
         "Use this to see what projects already exist — in particular, to check whether a",
@@ -253,6 +255,9 @@ export function registerTools(server: McpServer): void {
     "apply_changes",
     {
       title: "Apply approved changes",
+      // No hard delete exists, but edits overwrite state (reword, reschedule), so
+      // destructiveHint stays true — clients should keep gating this behind approval.
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
       description: [
         "Executes an explicit, already-approved list of changes against Todoist. ONLY call this",
         "with changes the user has explicitly approved ITEM BY ITEM in chat. Never infer, batch,",

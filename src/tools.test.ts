@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { z } from "zod";
 import { mapOverdueTask, ChangeItemSchema, executeChange } from "./tools.js";
 import type { TodoistTask } from "./todoist.js";
+import { paginate } from "./todoist.js";
 
 // ---------------------------------------------------------------------------
 // mapOverdueTask: Todoist task -> tool output mapping
@@ -269,6 +270,79 @@ test("executeChange: reports failure per item on a 401 without throwing", async 
     const result = await executeChange({ taskId: "1", action: "complete" });
     assert.equal(result.ok, false);
     assert.match(result.error ?? "", /401/);
+  } finally {
+    mock.restore();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// paginate: cursor following, MAX_PAGES limit, repeated cursor detection
+// ---------------------------------------------------------------------------
+
+test("paginate follows next_cursor across 2 pages and concatenates results", async () => {
+  const mock = installFetchMock([
+    {
+      status: 200,
+      body: {
+        results: [{ id: "1", name: "First" }, { id: "2", name: "Second" }],
+        next_cursor: "page2cursor",
+      },
+    },
+    {
+      status: 200,
+      body: { results: [{ id: "3", name: "Third" }], next_cursor: null },
+    },
+  ]);
+  try {
+    const items = (await paginate("/projects?limit=200")) as Array<{ id: string; name: string }>;
+    assert.equal(items.length, 3);
+    assert.equal(items[0].id, "1");
+    assert.equal(items[1].id, "2");
+    assert.equal(items[2].id, "3");
+  } finally {
+    mock.restore();
+  }
+});
+
+test("paginate throws when the API returns the same next_cursor twice", async () => {
+  const mock = installFetchMock([
+    {
+      status: 200,
+      body: { results: [{ id: "1", name: "First" }], next_cursor: "samecursor" },
+    },
+    {
+      status: 200,
+      body: { results: [{ id: "2", name: "Second" }], next_cursor: "samecursor" },
+    },
+  ]);
+  try {
+    await assert.rejects(
+      () => paginate("/projects?limit=200"),
+      (err: Error) => err.message.includes("did not advance (repeated cursor)"),
+    );
+  } finally {
+    mock.restore();
+  }
+});
+
+test("paginate throws after exceeding 100 pages", async () => {
+  const responses: Array<{ status: number; body: unknown }> = [];
+  // Create 101 responses, each with an incrementing cursor
+  for (let i = 0; i < 101; i++) {
+    responses.push({
+      status: 200,
+      body: {
+        results: [{ id: String(i), name: `Item ${i}` }],
+        next_cursor: `cursor${i + 1}`,
+      },
+    });
+  }
+  const mock = installFetchMock(responses);
+  try {
+    await assert.rejects(
+      () => paginate("/projects?limit=200"),
+      (err: Error) => err.message.includes("exceeded 100 pages"),
+    );
   } finally {
     mock.restore();
   }

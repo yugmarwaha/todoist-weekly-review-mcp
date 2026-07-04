@@ -90,20 +90,30 @@ interface CursorPage<T> {
  * this helper appends `cursor=` itself.
  */
 export async function paginate<T>(pathWithoutCursor: string): Promise<T[]> {
+  const MAX_PAGES = 100;
   const items: T[] = [];
   let cursor: string | null = null;
 
-  do {
+  for (let page = 0; page < MAX_PAGES; page++) {
     const separator = pathWithoutCursor.includes("?") ? "&" : "?";
     const path = cursor
       ? `${pathWithoutCursor}${separator}cursor=${encodeURIComponent(cursor)}`
       : pathWithoutCursor;
-    const page = (await todoistFetch(path)) as CursorPage<T>;
-    items.push(...page.results);
-    cursor = page.next_cursor;
-  } while (cursor);
-
-  return items;
+    const result = (await todoistFetch(path)) as CursorPage<T>;
+    items.push(...result.results);
+    if (result.next_cursor === null || result.next_cursor === undefined) {
+      return items;
+    }
+    if (result.next_cursor === cursor) {
+      throw new Error(
+        `Todoist pagination did not advance (repeated cursor) on ${pathWithoutCursor} — aborting`,
+      );
+    }
+    cursor = result.next_cursor;
+  }
+  throw new Error(
+    `Todoist pagination exceeded ${MAX_PAGES} pages on ${pathWithoutCursor} — aborting to avoid an unbounded loop`,
+  );
 }
 
 export interface TodoistDue {
