@@ -92,6 +92,18 @@ is really just the read tool below; proposing is the model thinking between read
 Flow: `get_overdue_tasks` → model proposes fixes in chat → owner per-item veto →
 `apply_changes` with the survivors.
 
+### Deferred: npm publishing (decided 2026-07-04 — plugin first, npm later)
+
+Prerequisites are already in place (LICENSE, `repository`/`files`/`prepublishOnly` in
+package.json, bin entry + shebang). When ready:
+
+1. Create a free npmjs.com account, verify email, `npm login`.
+2. Check the name is still free: `npm view todoist-weekly-review-mcp` (404 = free).
+3. `npm publish` (runs tests via prepublishOnly; ships only `dist/`, README, LICENSE).
+4. Users then need no clone at all:
+   `claude mcp add todoist-weekly-review --env TODOIST_API_TOKEN=<their-token> -- npx -y todoist-weekly-review-mcp`
+5. No permissions needed from anyone; keep the "unofficial, not affiliated with Doist" line.
+
 ### Future feature (not v1): heavier server
 
 A server that pre-computes suggestions itself (ranking, suggested reschedule dates, etc.)

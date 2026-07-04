@@ -53,5 +53,5 @@ and say **"run my weekly review"**.
 npm test
 ```
 
-28 unit tests (API mocked, no live calls) plus a smoke test that boots the real server
+34 unit tests (API mocked, no live calls) plus a smoke test that boots the real server
 over stdio without any token.
