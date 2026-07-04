@@ -1,8 +1,8 @@
 {
   "name": "todoist-weekly-review",
   "displayName": "Todoist Weekly Review",
-  "version": "0.1.0",
-  "description": "Human-in-the-loop weekly review for Todoist: surfaces overdue tasks with signals, proposes fixes, applies only what you approve. Unofficial — not affiliated with Doist.",
+  "version": "0.2.0",
+  "description": "Human-in-the-loop weekly review for Todoist: surfaces overdue and stale tasks with signals, proposes fixes (including splitting hidden projects), applies only what you approve. Unofficial — not affiliated with Doist.",
   "author": { "name": "Yug Marwaha", "url": "https://github.com/yugmarwaha" },
   "repository": "https://github.com/yugmarwaha/todoist-weekly-review-mcp",
   "license": "MIT",

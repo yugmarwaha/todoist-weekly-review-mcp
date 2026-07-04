@@ -1,7 +1,14 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { z } from "zod";
-import { mapOverdueTask, ChangeItemSchema, executeChange } from "./tools.js";
+import {
+  mapOverdueTask,
+  mapStaleTask,
+  isStale,
+  ChangeItemSchema,
+  GetStaleTasksInputShape,
+  executeChange,
+} from "./tools.js";
 import type { TodoistTask } from "./todoist.js";
 import { paginate } from "./todoist.js";
 
@@ -68,6 +75,111 @@ test("mapOverdueTask sets isRecurring false when due.is_recurring is absent", ()
   const task = makeTask({ due: { date: "2026-07-01" } });
   const out = mapOverdueTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
   assert.equal(out.isRecurring, false);
+});
+
+// ---------------------------------------------------------------------------
+// isStale / mapStaleTask: get_stale_tasks pure logic
+// ---------------------------------------------------------------------------
+
+test("isStale: fresh task (updated recently) is not stale", () => {
+  const task = makeTask({ updated_at: "2026-07-04T00:00:00Z" });
+  assert.equal(isStale(task, 60, "UTC", new Date("2026-07-05T00:00:00Z")), false);
+});
+
+test("isStale: old updated_at is stale", () => {
+  const task = makeTask({ updated_at: "2026-01-01T00:00:00Z" });
+  assert.equal(isStale(task, 60, "UTC", new Date("2026-07-05T00:00:00Z")), true);
+});
+
+test("isStale: updated_at missing but old added_at is stale", () => {
+  const task = makeTask({ updated_at: undefined, added_at: "2026-01-01T00:00:00Z" });
+  assert.equal(isStale(task, 60, "UTC", new Date("2026-07-05T00:00:00Z")), true);
+});
+
+test("isStale: both updated_at and added_at missing is NOT stale (no evidence)", () => {
+  const task = makeTask({ updated_at: undefined, added_at: undefined });
+  assert.equal(isStale(task, 60, "UTC", new Date("2026-07-05T00:00:00Z")), false);
+});
+
+test("isStale: a checked (completed) task is never stale", () => {
+  const task = makeTask({ checked: true, updated_at: "2026-01-01T00:00:00Z" });
+  assert.equal(isStale(task, 60, "UTC", new Date("2026-07-05T00:00:00Z")), false);
+});
+
+test("isStale: exactly at the threshold counts as stale (>=)", () => {
+  // 60 days before 2026-07-05 is 2026-05-06.
+  const task = makeTask({ updated_at: "2026-05-06T00:00:00Z" });
+  assert.equal(isStale(task, 60, "UTC", new Date("2026-07-05T00:00:00Z")), true);
+});
+
+test("mapStaleTask: full mapping with due date, recurrence, and postponed_count", () => {
+  const task = makeTask({
+    added_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-05-01T00:00:00Z",
+    due: { date: "2026-08-01", is_recurring: true },
+    postponed_count: 2,
+  });
+  const out = mapStaleTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
+  assert.equal(out.id, "123");
+  assert.equal(out.content, "Do the thing");
+  assert.equal(out.projectId, "p1");
+  assert.equal(out.projectName, "Work");
+  assert.equal(out.priority, 4);
+  assert.equal(out.createdAt, "2026-01-01");
+  assert.equal(out.lastActivityAt, "2026-05-01");
+  assert.equal(out.dueDate, "2026-08-01");
+  assert.equal(out.isRecurring, true);
+  assert.equal(out.timesRescheduled, 2);
+  assert.equal(typeof out.ageDays, "number");
+  assert.equal(typeof out.daysSinceActivity, "number");
+});
+
+test("mapStaleTask: lastActivityAt falls back to added_at when updated_at is absent", () => {
+  const task = makeTask({ added_at: "2026-01-01T00:00:00Z", updated_at: undefined });
+  const out = mapStaleTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
+  assert.equal(out.lastActivityAt, "2026-01-01");
+  assert.equal(out.createdAt, "2026-01-01");
+});
+
+test("mapStaleTask: omits dueDate/isRecurring when the task has no due", () => {
+  const task = makeTask({ due: null, added_at: "2026-01-01T00:00:00Z", updated_at: "2026-05-01T00:00:00Z" });
+  const out = mapStaleTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
+  assert.equal("dueDate" in out, false);
+  assert.equal("isRecurring" in out, false);
+});
+
+test("mapStaleTask: omits timesRescheduled when postponed_count is absent", () => {
+  const task = makeTask({ added_at: "2026-01-01T00:00:00Z", updated_at: "2026-05-01T00:00:00Z" });
+  const out = mapStaleTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
+  assert.equal("timesRescheduled" in out, false);
+});
+
+test("mapStaleTask: falls back to placeholder projectName when the id isn't in the map", () => {
+  const task = makeTask({
+    project_id: "unknown",
+    added_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-05-01T00:00:00Z",
+  });
+  const out = mapStaleTask(task, new Map([["p1", "Work"]]), "UTC", new Date("2026-07-05T00:00:00Z"));
+  assert.equal(out.projectName, "(unknown project)");
+});
+
+// ---------------------------------------------------------------------------
+// get_stale_tasks input schema
+// ---------------------------------------------------------------------------
+
+const GetStaleTasksSchema = z.object(GetStaleTasksInputShape);
+
+test("get_stale_tasks: minDaysSinceUpdate is optional", () => {
+  assert.equal(GetStaleTasksSchema.safeParse({}).success, true);
+});
+
+test("get_stale_tasks: minDaysSinceUpdate must be a positive integer", () => {
+  assert.equal(GetStaleTasksSchema.safeParse({ minDaysSinceUpdate: 60 }).success, true);
+  assert.equal(GetStaleTasksSchema.safeParse({ minDaysSinceUpdate: 0 }).success, false);
+  assert.equal(GetStaleTasksSchema.safeParse({ minDaysSinceUpdate: -5 }).success, false);
+  assert.equal(GetStaleTasksSchema.safeParse({ minDaysSinceUpdate: 1.5 }).success, false);
+  assert.equal(GetStaleTasksSchema.safeParse({ minDaysSinceUpdate: 3651 }).success, false);
 });
 
 // ---------------------------------------------------------------------------
@@ -154,6 +266,45 @@ test("apply_label requires a label", () => {
 test("unknown action is rejected", () => {
   const result = ChangesArraySchema.safeParse([{ taskId: "1", action: "delete" }]);
   assert.equal(result.success, false);
+});
+
+test("split requires at least 2 subtasks", () => {
+  assert.equal(
+    ChangesArraySchema.safeParse([{ taskId: "1", action: "split", params: { subtasks: ["only one"] } }])
+      .success,
+    false,
+  );
+});
+
+test("split rejects an empty string among subtasks", () => {
+  assert.equal(
+    ChangesArraySchema.safeParse([
+      { taskId: "1", action: "split", params: { subtasks: ["Book flights", ""] } },
+    ]).success,
+    false,
+  );
+});
+
+test("split rejects more than 20 subtasks", () => {
+  const subtasks = Array.from({ length: 21 }, (_, i) => `Step ${i + 1}`);
+  assert.equal(
+    ChangesArraySchema.safeParse([{ taskId: "1", action: "split", params: { subtasks } }]).success,
+    false,
+  );
+});
+
+test("split with 2-20 valid subtasks passes", () => {
+  assert.equal(
+    ChangesArraySchema.safeParse([
+      { taskId: "1", action: "split", params: { subtasks: ["Book flights", "Book hotel"] } },
+    ]).success,
+    true,
+  );
+  const subtasks = Array.from({ length: 20 }, (_, i) => `Step ${i + 1}`);
+  assert.equal(
+    ChangesArraySchema.safeParse([{ taskId: "1", action: "split", params: { subtasks } }]).success,
+    true,
+  );
 });
 
 test("one bad item rejects the whole batch (documented discriminated-union behavior)", () => {
@@ -286,6 +437,46 @@ test("executeChange: reports failure per item on a 401 without throwing", async 
     const result = await executeChange({ taskId: "1", action: "complete" });
     assert.equal(result.ok, false);
     assert.match(result.error ?? "", /401/);
+  } finally {
+    mock.restore();
+  }
+});
+
+test("executeChange: split creates N sub-tasks in order with the right bodies", async () => {
+  const mock = installFetchMock([{ status: 204 }, { status: 204 }, { status: 204 }]);
+  try {
+    const result = await executeChange({
+      taskId: "42",
+      action: "split",
+      params: { subtasks: ["Book flights", "Book hotel", "Pack bags"] },
+    });
+    assert.equal(result.ok, true);
+    assert.equal(mock.calls.length, 3);
+    for (const call of mock.calls) {
+      assert.match(call.url, /\/tasks$/);
+    }
+    const bodies = mock.calls.map((c) => JSON.parse(String(c.init?.body)));
+    assert.deepEqual(bodies, [
+      { content: "Book flights", parent_id: "42" },
+      { content: "Book hotel", parent_id: "42" },
+      { content: "Pack bags", parent_id: "42" },
+    ]);
+  } finally {
+    mock.restore();
+  }
+});
+
+test("executeChange: split reports partial creation on a mid-way failure", async () => {
+  const mock = installFetchMock([{ status: 204 }, { status: 204 }, { status: 500, body: "boom" }]);
+  try {
+    const result = await executeChange({
+      taskId: "42",
+      action: "split",
+      params: { subtasks: ["Book flights", "Book hotel", "Pack bags", "Buy sunscreen", "Print tickets"] },
+    });
+    assert.equal(result.ok, false);
+    assert.match(result.error ?? "", /created 2\/5 sub-tasks before failing/);
+    assert.equal(mock.calls.length, 3); // stopped after the failing 3rd call
   } finally {
     mock.restore();
   }

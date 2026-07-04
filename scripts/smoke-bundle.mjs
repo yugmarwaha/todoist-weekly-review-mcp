@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // Verifies the esbuild single-file bundle (plugin/server.cjs) actually boots
-// as an MCP server and exposes exactly the 3 expected tools. Modeled on
+// as an MCP server and exposes exactly the 4 expected tools. Modeled on
 // scripts/mcp-call.mjs. No Todoist token is needed — listTools works even
 // without one.
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
-const EXPECTED_TOOLS = ["get_overdue_tasks", "get_projects", "apply_changes"];
+const EXPECTED_TOOLS = ["get_overdue_tasks", "get_stale_tasks", "get_projects", "apply_changes"];
 
 const transport = new StdioClientTransport({
   command: process.execPath,
@@ -34,4 +34,4 @@ if (!matches) {
   process.exit(1);
 }
 
-console.log("OK: exactly the 3 expected tools are present.");
+console.log("OK: exactly the 4 expected tools are present.");

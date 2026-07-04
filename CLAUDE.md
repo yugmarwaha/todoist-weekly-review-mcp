@@ -12,7 +12,8 @@ Spec lives in `IMPLEMENTATION.md`; decisions in `PLAN.md`; glossary in `CONTEXT.
 ## Layout
 
 - `src/index.ts` — entry; boots McpServer, registers tools
-- `src/tools.ts` — the 3 tools (`get_overdue_tasks`, `get_projects`, `apply_changes`) and their zod schemas
+- `src/tools.ts` — the 4 tools (`get_overdue_tasks`, `get_stale_tasks`, `get_projects`,
+  `apply_changes`) and their zod schemas
 - `src/todoist.ts` — Todoist API v1 client (auth, pagination, error mapping)
 - `src/dates.ts` — timezone-aware date math
 

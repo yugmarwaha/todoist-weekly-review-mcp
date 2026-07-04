@@ -192,6 +192,8 @@ export interface TodoistTask {
   postponed_count?: number;
   checked?: boolean;
   labels?: string[];
+  added_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface TodoistProject {
@@ -218,6 +220,15 @@ export async function getOverdueTasks(): Promise<TodoistTask[]> {
   return paginate<TodoistTask>("/tasks/filter?query=overdue&limit=200");
 }
 
+/**
+ * Every active (not completed) task, unfiltered — the base data set for the
+ * Stale Task pass, which needs to look at added_at/updated_at across ALL
+ * tasks rather than just overdue ones.
+ */
+export async function getAllActiveTasks(): Promise<TodoistTask[]> {
+  return paginate<TodoistTask>("/tasks?limit=200");
+}
+
 export async function getTask(taskId: string): Promise<TodoistTask> {
   return (await todoistFetch(`/tasks/${encodeURIComponent(taskId)}`)) as TodoistTask;
 }
@@ -238,6 +249,18 @@ export async function moveTask(taskId: string, projectId: string): Promise<void>
 
 export async function closeTask(taskId: string): Promise<void> {
   await todoistFetch(`/tasks/${encodeURIComponent(taskId)}/close`, { method: "POST" });
+}
+
+/**
+ * Creates a single sub-task under `parentId`. The parent implies the
+ * project, so no project_id is needed. Used by apply_changes' `split`
+ * action, one call per sub-task, in order.
+ */
+export async function createSubtask(parentId: string, content: string): Promise<void> {
+  await todoistFetch("/tasks", {
+    method: "POST",
+    body: { content, parent_id: parentId },
+  });
 }
 
 export async function createProject(name: string): Promise<TodoistProject> {

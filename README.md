@@ -35,8 +35,9 @@ Then create `~/.config/todoist-weekly-review/.env` containing
 | Tool | What it does |
 |------|--------------|
 | `get_overdue_tasks` | Read-only. Overdue tasks + signals. |
+| `get_stale_tasks` | Read-only. Tasks untouched for N days (default 60). |
 | `get_projects` | Read-only. Your projects. |
-| `apply_changes` | The only write. Actions: `reschedule`, `set_priority`, `move_to_project`, `reword`, `complete`, `apply_label`. |
+| `apply_changes` | The only write. Actions: `reschedule`, `set_priority`, `move_to_project`, `reword`, `complete`, `apply_label`, `split`. |
 
 ## Safety
 
@@ -58,6 +59,8 @@ Then create `~/.config/todoist-weekly-review/.env` containing
 - Days overdue are computed in your Todoist account's timezone.
 - Recurring tasks are flagged `isRecurring` — completing one advances it to the next
   occurrence instead of retiring it.
+- Hidden-project detection is the client model's judgment call — the server just provides
+  the `split` action to break a task into sub-tasks.
 
 ## Tests
 
@@ -65,5 +68,5 @@ Then create `~/.config/todoist-weekly-review/.env` containing
 npm test
 ```
 
-43 unit tests (API mocked, no live calls) plus a smoke test that boots the real server
+61 unit tests (API mocked, no live calls) plus a smoke test that boots the real server
 over stdio without any token.
