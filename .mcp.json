@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "todoist-weekly-review": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {
+        "TODOIST_API_TOKEN": "${TODOIST_API_TOKEN}"
+      }
+    }
+  }
+}
