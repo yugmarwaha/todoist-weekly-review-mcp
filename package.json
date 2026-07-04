@@ -11,6 +11,8 @@
     "build": "tsc",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "test": "npm run build && node --test dist/*.test.js",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=plugin/server.cjs",
+    "build:plugin": "npm run bundle",
     "prepublishOnly": "npm test"
   },
   "keywords": [
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.28.1",
     "typescript": "^5.5.0"
   }
 }

@@ -13,10 +13,22 @@ v1 handles overdue tasks only. Roadmap and design history: `PLAN.md`, `CONTEXT.m
 ```bash
 npm install && npm run build
 cp .env.example .env   # paste your token from Todoist → Settings → Integrations → Developer
+# (or create ~/.config/todoist-weekly-review/.env instead — see below)
 ```
 
 Open Claude Code in this folder, approve the `todoist-weekly-review` server when asked,
 and say **"run my weekly review"**.
+
+## Install as a Claude Code plugin
+
+```
+/plugin marketplace add yugmarwaha/todoist-weekly-review-mcp
+/plugin install todoist-weekly-review@yugmarwaha-plugins
+```
+
+Then create `~/.config/todoist-weekly-review/.env` containing
+`TODOIST_API_TOKEN=<your token>` (or export that variable in your shell) and run
+`/todoist-weekly-review`.
 
 ## Tools
 
@@ -53,5 +65,5 @@ and say **"run my weekly review"**.
 npm test
 ```
 
-34 unit tests (API mocked, no live calls) plus a smoke test that boots the real server
+43 unit tests (API mocked, no live calls) plus a smoke test that boots the real server
 over stdio without any token.

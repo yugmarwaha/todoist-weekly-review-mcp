@@ -8,18 +8,77 @@
  * vs. the original IMPLEMENTATION.md draft (filter endpoint, move endpoint).
  */
 
+import * as os from "node:os";
+import * as path from "node:path";
+import * as fs from "node:fs";
+
 const BASE_URL = "https://api.todoist.com/api/v1";
 
 export class TodoistAuthError extends Error {}
 
-function getToken(): string {
-  const token = process.env.TODOIST_API_TOKEN;
-  if (!token) {
-    throw new Error(
-      "TODOIST_API_TOKEN is not set. Export it before calling this tool (see README.md setup instructions).",
-    );
+const TOKEN_CONFIG_PATH = path.join(os.homedir(), ".config", "todoist-weekly-review", ".env");
+
+/**
+ * Pure parser for the token config file's contents: looks for a
+ * `TODOIST_API_TOKEN=<value>` line, ignoring blank lines and `#` comments,
+ * trimming whitespace, and stripping surrounding quotes from the value.
+ * Exported for unit testing without touching the filesystem.
+ */
+export function tokenFromEnvFileText(text: string): string | undefined {
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const eq = line.indexOf("=");
+    if (eq === -1) continue;
+    const key = line.slice(0, eq).trim();
+    if (key !== "TODOIST_API_TOKEN") continue;
+    let value = line.slice(eq + 1).trim();
+    if (
+      value.length >= 2 &&
+      ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'")))
+    ) {
+      value = value.slice(1, -1);
+    }
+    return value || undefined;
   }
-  return token;
+  return undefined;
+}
+
+// Cache the token once we've successfully read it from the config file, so
+// we don't hit the filesystem on every request. Only a SUCCESSFUL read is
+// cached — if the file is missing (or has no token yet), we keep trying on
+// later calls so a user can create it without restarting the server.
+let cachedFileToken: string | undefined;
+
+function tokenFromConfigFile(): string | undefined {
+  if (cachedFileToken) return cachedFileToken;
+  try {
+    const text = fs.readFileSync(TOKEN_CONFIG_PATH, "utf8");
+    const token = tokenFromEnvFileText(text);
+    if (token) {
+      cachedFileToken = token;
+      return token;
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getToken(): string {
+  const envToken = process.env.TODOIST_API_TOKEN;
+  if (envToken) return envToken;
+
+  const fileToken = tokenFromConfigFile();
+  if (fileToken) return fileToken;
+
+  throw new Error(
+    "TODOIST_API_TOKEN is not set. Either export it in your shell, or create " +
+      "~/.config/todoist-weekly-review/.env containing a line: " +
+      "TODOIST_API_TOKEN=<your token>. Get a token from Todoist → Settings → " +
+      "Integrations → Developer.",
+  );
 }
 
 /**

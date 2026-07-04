@@ -1,0 +1,13 @@
+{
+  "name": "yugmarwaha-plugins",
+  "owner": { "name": "Yug Marwaha", "url": "https://github.com/yugmarwaha" },
+  "plugins": [
+    {
+      "name": "todoist-weekly-review",
+      "source": "./plugin",
+      "description": "Human-in-the-loop weekly review for Todoist. Unofficial — not affiliated with Doist.",
+      "category": "productivity",
+      "tags": ["todoist", "mcp", "gtd"]
+    }
+  ]
+}
