@@ -64,43 +64,46 @@ the client model accounts for the inversion when it reasons about priority in ch
    npm run build
    ```
 2. Get a personal API token: Todoist → **Settings → Integrations → Developer** → "API token".
-3. Export it as an environment variable (never hardcode it, never commit it):
+3. Provide it via a `.env` file (recommended) or an exported environment variable:
    ```bash
-   export TODOIST_API_TOKEN="your-token-here"
+   cp .env.example .env    # then paste your token after TODOIST_API_TOKEN=
    ```
-   The server reads this at **request time**, not at startup — it will boot and list its tools
-   even if the token isn't set yet; only calling a tool that talks to Todoist requires it.
+   `.env` is gitignored and is loaded by Node's built-in `--env-file-if-exists=.env` flag
+   (already wired into `npm start` and `.mcp.json`) — no dotenv dependency. Never commit it
+   and never `git add -f` it. Alternatively, `export TODOIST_API_TOKEN="..."` in your shell
+   works too; a value already present in the environment takes precedence over `.env`.
+
+   The server reads the token at **request time**, not at startup — it will boot and list its
+   tools even if the token isn't set yet; only calling a tool that talks to Todoist requires it.
 
 ## Registering with Claude Code
 
 Either of these works; pick one.
 
-**`claude mcp add` (recommended — keeps the token out of any file):**
-```bash
-claude mcp add todoist-weekly-review --env TODOIST_API_TOKEN=<your-token> -- node <absolute-path>/dist/index.js
-```
-
-**`.mcp.json`:**
+**Project `.mcp.json` (recommended — already committed in this repo):**
 ```json
 {
   "mcpServers": {
     "todoist-weekly-review": {
       "command": "node",
-      "args": ["<absolute-path>/dist/index.js"],
-      "env": {
-        "TODOIST_API_TOKEN": "${TODOIST_API_TOKEN}"
-      }
+      "args": ["--env-file-if-exists=.env", "dist/index.js"]
     }
   }
 }
 ```
-`"${TODOIST_API_TOKEN}"` passes through your shell's existing env var so the real token never
-needs to be written into `.mcp.json`. If your Claude Code version doesn't support env-var
-passthrough in `.mcp.json`, use the `claude mcp add --env` form above instead.
+With the `.env` file from Setup step 3 in place, just open Claude Code in this project folder
+and approve the `todoist-weekly-review` server when prompted. The token stays in the
+gitignored `.env`; `.mcp.json` itself contains no secret. (If `.env` doesn't exist, the server
+still boots — the token can instead come from your shell environment, which it inherits.)
 
-**Never commit a real token.** `.mcp.json` should only ever contain the `${TODOIST_API_TOKEN}`
-placeholder form (or `<YOUR_TOKEN>` if you must hardcode locally for a moment) — if you paste
-a literal token into a tracked file, treat the token as compromised and rotate it in Todoist.
+**Or `claude mcp add` (stores the token in your user-level Claude config, outside the repo):**
+```bash
+claude mcp add todoist-weekly-review --env TODOIST_API_TOKEN=<your-token> -- node <absolute-path>/dist/index.js
+```
+
+**Never commit a real token.** The only file a real token should ever live in is the
+gitignored `.env` (or your shell profile / user-level Claude config). If you ever paste a
+literal token into a tracked file, treat it as compromised and rotate it in Todoist.
 
 ## Safety rules
 
