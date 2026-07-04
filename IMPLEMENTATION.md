@@ -234,6 +234,6 @@ seed/observe a few real overdue tasks → `get_overdue_tasks` → model proposes
 
 The end goal is to ship this as a **Claude Code plugin** (hence TypeScript). v1 stays a plain
 stdio MCP server used personally. When ready to distribute: package for `npx` execution and
-wrap as a Claude Code plugin (bundled MCP server; optionally add slash commands like
-`/weekly-review` later). Design v1 so this wrap is additive — keep the server entry point and
-config simple and env-var driven.
+wrap as a Claude Code plugin (bundled MCP server; slash command decided 2026-07-04:
+**`/todoist-weekly-review`**). Design v1 so this wrap is additive — keep the server entry
+point and config simple and env-var driven.
