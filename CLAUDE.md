@@ -34,6 +34,14 @@ Spec lives in `IMPLEMENTATION.md`; decisions in `PLAN.md`; glossary in `CONTEXT.
 - A task due earlier today is not "overdue" until the next day.
 - All list endpoints use cursor pagination (`cursor` / `next_cursor`) — follow to exhaustion.
 
+## Releasing plugin changes
+
+The plugin ships the committed bundle `plugin/server.cjs`, not `src/`. After any src change:
+
+1. `npm run build:plugin` — regenerate the bundle (and commit it).
+2. Bump `version` in `plugin/.claude-plugin/plugin.json` — users only get updates on a version bump.
+3. Commit and push.
+
 ## Style
 
 Keep the README and any docs short and plain. Tool descriptions are the steering
