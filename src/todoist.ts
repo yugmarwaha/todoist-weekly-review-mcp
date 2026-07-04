@@ -34,7 +34,7 @@ export async function todoistFetch(
   init: { method?: string; body?: unknown } = {},
 ): Promise<unknown> {
   const token = getToken();
-  const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
+  const url = `${BASE_URL}${path}`;
 
   let response: Response;
   try {
