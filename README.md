@@ -1,12 +1,14 @@
 # Todoist Weekly Review MCP
 
-An MCP server for doing a weekly review of your Todoist with Claude. It lists your
-overdue tasks with the signals that matter (days overdue, priority, how often you've
-postponed each one). Claude suggests a fix per task, you approve or veto each one in
-chat, and only the approved changes are applied. The server decides nothing on its own
-and makes no LLM calls. Unofficial — not affiliated with Doist.
+An MCP server for doing a weekly review of your Todoist with Claude. It surfaces the
+three kinds of mess a task list collects — overdue pileups, stale tasks nobody has
+touched in months, and "hidden projects" (single tasks that are really whole projects) —
+with the signals that matter: days overdue, days since activity, priority, how often
+you've postponed each one. Claude suggests a fix per task, you approve or veto each one
+in chat, and only the approved changes are applied. The server decides nothing on its
+own and makes no LLM calls. Unofficial — not affiliated with Doist.
 
-v1 handles overdue tasks only. Roadmap and design history: `PLAN.md`, `CONTEXT.md`.
+Design history and roadmap: `PLAN.md`, `CONTEXT.md`.
 
 ## Quick start
 
@@ -44,7 +46,8 @@ Then create `~/.config/todoist-weekly-review/.env` containing
 - Nothing is written without your explicit per-item approval in chat.
 - No delete exists. Tasks are retired by completing them or moving them to "Someday/Maybe"
   (created automatically if missing).
-- Token lives in the gitignored `.env` only — never logged, never committed.
+- Token lives in the gitignored `.env` (or `~/.config/todoist-weekly-review/.env`) —
+  never logged, never committed.
 - Read errors are loud (bad token, rate limit, etc.) — never a silent empty list.
 - A malformed change rejects the whole batch before anything is written.
 

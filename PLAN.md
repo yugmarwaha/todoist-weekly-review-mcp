@@ -1,7 +1,7 @@
 # PLAN — Todoist Weekly Review MCP
 
-> Status: **planning** (docs not yet complete). This folder is planning-only; when done,
-> its md files move to a fresh implementation repo. See root `CLAUDE.md` for conventions.
+> Status: **shipped** — v1 built and live-dogfooded 2026-07-03; v1.1 + v1.2 added
+> 2026-07-04. This file is kept as the design/decision record.
 
 ## One-liner
 
@@ -58,7 +58,9 @@ request/response loop, auth, and the two-step propose/apply flow — learn it on
 mode, then the rest is additive.
 
 - **v1.1** — add **Hidden Project** detection + `split into sub-tasks` fix.
+  ✅ Implemented 2026-07-04 (`split` action; detection steered via tool descriptions).
 - **v1.2** — add **Stale Task** detection.
+  ✅ Implemented 2026-07-04 (`get_stale_tasks`, default 60-day threshold).
 - **Later (not planned yet):** Notion target, daily-triage use case, goal→task breakdown,
   OAuth / multi-user, **heavier "smart" server** (see below), **ship as a Claude Code
   plugin** (the end goal — drives the stack choice below).
@@ -111,5 +113,7 @@ is deliberately **out of scope for now**. Revisit only if the thin design proves
 
 ## Status
 
-Core planning **complete** — no blocking open questions. Ready to move these md files into a
-fresh implementation repo when the owner chooses to start building.
+Built. v1 (overdue pileup, end to end) shipped and live-dogfooded 2026-07-03; v1.1
+(hidden project + split) and v1.2 (stale task) shipped 2026-07-04; packaged as a Claude
+Code plugin (`/todoist-weekly-review`) the same day. Remaining: npm publish (steps
+above) and continued personal testing.

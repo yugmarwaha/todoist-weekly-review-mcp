@@ -224,6 +224,9 @@ seed/observe a few real overdue tasks → `get_overdue_tasks` → model proposes
 
 ## 11. Out of scope for v1 (do NOT build)
 
+> Historical note: v1.1 and v1.2 below were subsequently built on 2026-07-04, after v1
+> shipped and passed its live dogfood. The rest of this list remains out of scope.
+
 - Hidden Project detection & `split into sub-tasks` (**v1.1**).
 - Stale Task detection (**v1.2**).
 - Notion, daily-triage, goal→task breakdown, OAuth / multi-user.
